@@ -11,9 +11,21 @@
             padding: 0;
         }
         .window{
-            margin: auto;
-            padding-top: 25vh;
-            height: 50vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #fff8db;
+        }
+
+        .settings{
+            padding: 20px;
+            height: 350px;
+            max-height: 350px;  
+            border-radius: 20px;
+            background: linear-gradient(145deg, #ffffea, #e6dfc5);
+            box-shadow:  20px 20px 60px #aba693,
+                        -20px -20px 60px #ffffff;
         }
         .title{
             text-align: center;
@@ -21,36 +33,31 @@
         .sliders{
             width: 400px;
         }
-
-        .slider{
-            width: 80%;
-        }
         
         .results-container {
+            padding: 20px;
             width: 500px;
-            height: 500px;
-            max-height: 200px; 
+            height: 400px;
+            max-height: 350px; 
             overflow-y: auto; 
-            border: 3px solid #2f3545; 
-            border-radius: 50px;
-            background: #ffffff;
-            box-shadow: inset 16px 16px 32px #e8e8e8,
-            inset -16px -16px 32px #ffffff;
+            border-radius: 20px;
+            background: linear-gradient(145deg, #ffffea, #e6dfc5);
+            box-shadow:  20px 20px 60px #aba693,
+                        -20px -20px 60px #ffffff;
         }
         .application{
             align-items: center;
             margin: auto;
-            align-items: center;
             justify-content: space-between;
             padding: 40px 100px 40px 100px;
-            width: 50%;
+            width: 55%;
             display: flex;
             flex-direction: row;
-            border-radius: 50px;
-            background: #ffffff;
-            box-shadow:  20px 20px 60px #d9d9d9,
-                -20px -20px 60px #ffffff;  
-            border: 3px solid #2f3545; 
+            border-radius: 20px;
+            border-radius: 20px;
+            background: #fff8db;
+            box-shadow: inset 20px 20px 60px #aba693,
+                        inset -20px -20px 60px #ffffff;
         }
         .checkbox-wrapper{
             align-items: center;
@@ -233,45 +240,56 @@
         /* Slider styles */
         .slider {
             -webkit-appearance: none;
-            appearance: none;
-            width: 100%;
-            height: 25px;
-            background: #5628ee; /* Change slider color here */
+            width: 80%;
+            height: 4px;
+            border-radius: 5px;
+            background: #D5DBE1;
             outline: none;
             opacity: 0.7;
             -webkit-transition: .2s;
             transition: opacity .2s;
-            border-radius: 50px;
-        }
-
-        .slider:hover {
-            opacity: 1;
         }
 
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 25px;
-            height: 25px;
-            background: #ffffff; /* Change thumb color here */
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: #000000;
             cursor: pointer;
-            border-radius: 50px;
+            transition: 0.3s ease-in-out;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            box-shadow: 0px 0px 0px 8px rgba(0, 0, 0, 0.16);
+            transition: 0.3s ease-in-out;
         }
 
         .slider::-moz-range-thumb {
-            width: 25px;
-            height: 25px;
-            background: #ffffff; /* Change thumb color here */
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: #000000;
             cursor: pointer;
-            border-radius: 50px;
-        }
-        span{
-            font-weight: bold;
         }
 
-        .slider-info{
+        .slider-info {
+            margin-top: 10px;
             display: flex;
+            align-items: center;
             justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 6px;
+        }
+
+        .slider-value {
+            font-weight: 600;
+        }
+
+        span{
+            font-weight: bold;
         }
 
         /*Loader*/
@@ -431,7 +449,6 @@
 </head>
 <body>
     <div class="window">
-        <h1 class="title">DeciBell</h1>
         <div class="application">
             <div class="settings">
                 <div class="checkbox-wrapper">
@@ -451,23 +468,23 @@
                 </div>
                 <br>
                 <div class="sliders">
+                    <label for="sensitivity-slider">Microphone Sensitivity:</label>
                     <div class = "slider-info">
-                        <label for="sensitivity-slider">Microphone Sensitivity:</label>
-                        <span id="sensitivity-value">1.0</span>
+                        <input class="slider" type="range" id="sensitivity-slider" min="0.1" max="2.0" value="1.0" step="0.1">
+                        <span class="slider-value" id="sensitivity-value">1.0</span>
                     </div>
-                    <input class="slider" type="range" id="sensitivity-slider" min="0.1" max="2.0" value="1.0" step="0.1">
                     <br>
+                    <label for="threshold-slider">Acceptable Loudness Level:</label>
                     <div class = "slider-info">
-                        <label for="threshold-slider">Acceptable Loudness Level:</label>
-                        <span id="threshold-value">50 dB</span>
+                        <input class="slider" type="range" id="threshold-slider" min="1" max="100" value="50" step="1">
+                        <span class="slider-value" id="threshold-value">50 dB</span>
                     </div>
-                    <input class="slider" type="range" id="threshold-slider" min="1" max="100" value="50" step="1">
                     <br>
+                    <label for="threshold-duration-slider">Acceptable Loudness Duration:</label>
                     <div class = "slider-info">
-                        <label for="threshold-duration-slider">Acceptable Loudness Duration:</label>
-                        <span id="threshold-duration-value">2 sec</span>
+                        <input class="slider" type="range" id="threshold-duration-slider" min="1" max="5" value="2" step="1">
+                        <span class="slider-value" id="threshold-duration-value">2 sec</span>
                     </div>
-                    <input class="slider" type="range" id="threshold-duration-slider" min="1" max="5" value="2" step="1">
                 </div>
             </div>
             <div class="results-container">
@@ -550,20 +567,12 @@
                     testMicrophoneCheckbox.checked = false;
                     stopTestingMicrophone();
                 }
-                disableSliders(true);
                 showLoadingDialog();
                 startProcessing();
             } else {
-                disableSliders(false);
                 showLoadingDialog();
                 stopProcessing();
             }
-        }
-
-        function disableSliders(disable) {
-            sensitivitySlider.disabled = disable;
-            thresholdSlider.disabled = disable;
-            thresholdDurationSlider.disabled = disable;
         }
 
         function startProcessing() {
@@ -631,7 +640,6 @@
             if (testMicrophoneCheckbox.checked) {
                 clearInterval(intervalId);
                 clearInterval(intervalIdWf);
-                disableSliders(false);
                 if (audioContext) {
                     audioContext.close();
                 }
