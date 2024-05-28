@@ -56,9 +56,9 @@ def receive_audio():
     global last_waveform
     last_waveform = waveform
 
-    print("Received and decoded audio data:")
-    print(f"Waveform shape: {waveform.shape}")
-    print(f"Waveform first 10 samples: {waveform[:10]}")
+    #print("Received and decoded audio data:")
+    #print(f"Waveform shape: {waveform.shape}")
+    #print(f"Waveform first 10 samples: {waveform[:10]}")
 
     return jsonify({"message": "Audio data received successfully"}), 200
 
@@ -77,8 +77,8 @@ def classify_audio():
     # Calculate Decibel
     decibel = calculate_db(rms_amplitude)
 
-    print(f"RMS Amplitude: {rms_amplitude}")
-    print(f"Decibel: {decibel}")
+    #print(f"RMS Amplitude: {rms_amplitude}")
+    #print(f"Decibel: {decibel}")
 
     # Use YAMNet model to classify sound
     scores, _, _ = yamnet_model(waveform)
@@ -87,7 +87,7 @@ def classify_audio():
     inferred_class = class_names[top_class_index]
 
     print(f"Inferred Class: {inferred_class}")
-    print(f"Scores: {mean_scores}")
+    #print(f"Scores: {mean_scores}")
 
     # Apply sensitivity adjustment to decibel level
     adjusted_decibel = decibel * sensitivity
@@ -98,14 +98,6 @@ def classify_audio():
         "db": adjusted_decibel
     }
     return jsonify(result)
-#test
-@app.route('/last_waveform')
-def get_last_waveform():
-    global last_waveform
-    if last_waveform is None:
-        return jsonify({"error": "No waveform available"}), 400
-
-    return jsonify({"waveform": last_waveform.tolist()}), 200
 
 if __name__ == '__main__':
     last_waveform = None
