@@ -37,6 +37,10 @@ def calculate_db(rms_amplitude, ref=0.00002):
 def index():
     return render_template('index.html')
 
+@app.route('/ring')
+def ring():
+    print("Ring")
+
 @app.route('/receive_audio', methods=['POST'])
 def receive_audio():
     audio_data = request.json.get('data')
