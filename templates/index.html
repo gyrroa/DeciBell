@@ -12,6 +12,7 @@
         }
         .window{
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
@@ -20,8 +21,9 @@
 
         .settings{
             padding: 20px;
-            height: 350px;
-            max-height: 350px;  
+            margin: 40px;
+            height: 450px;
+            max-height: 450px;  
             border-radius: 20px;
             background: linear-gradient(145deg, #ffffea, #e6dfc5);
             box-shadow:  20px 20px 60px #aba693,
@@ -35,10 +37,11 @@
         }
         
         .results-container {
-            padding: 20px;
+            margin: 40px 40px 40px 0px;
+            padding: 50px;
             width: 500px;
-            height: 400px;
-            max-height: 350px; 
+            height: 390px;
+            max-height: 390px;
             overflow-y: auto; 
             border-radius: 20px;
             background: linear-gradient(145deg, #ffffea, #e6dfc5);
@@ -49,8 +52,7 @@
             align-items: center;
             margin: auto;
             justify-content: space-between;
-            padding: 40px 100px 40px 100px;
-            width: 55%;
+            width: 60vw;
             display: flex;
             flex-direction: row;
             border-radius: 20px;
@@ -226,17 +228,6 @@
             z-index: 9999; /* Make sure it's on top of other elements */
         }
 
-        #loading-dialog {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #fff;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            z-index: 10000; /* Make sure it's on top of other elements */
-        }
         /* Slider styles */
         .slider {
             -webkit-appearance: none;
@@ -293,9 +284,23 @@
         }
 
         /*Loader*/
+        
+        #loading-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff8d889;
+            padding: 20px;
+            border: none;
+            border-radius: 20px;
+            box-shadow:  20px 20px 60px #aba693,
+                        -20px -20px 60px #ffffff;
+            z-index: 10000; /* Make sure it's on top of other elements */
+        }
         .loader {
-            --path: #2f3545;
-            --dot: #5628ee;
+            --path: #4a4942;
+            --dot: #48B660;
             --duration: 3s;
             width: 44px;
             height: 44px;
@@ -480,10 +485,16 @@
                         <span class="slider-value" id="threshold-value">50 dB</span>
                     </div>
                     <br>
-                    <label for="threshold-duration-slider">Acceptable Loudness Duration:</label>
+                    <label for="sound-duration-slider">Sound Duration:</label>
                     <div class = "slider-info">
-                        <input class="slider" type="range" id="threshold-duration-slider" min="1" max="5" value="2" step="1">
-                        <span class="slider-value" id="threshold-duration-value">2 sec</span>
+                        <input class="slider" type="range" id="sound-duration-slider" min="1" max="5" value="3" step="1">
+                        <span class="slider-value" id="sound-duration-value">3</span>
+                    </div>
+                    <br>
+                    <label for="silence-threshold-slider">Silence Threshold:</label>
+                    <div class = "slider-info">
+                        <input class="slider" type="range" id="silence-threshold-slider" min="1" max="5" value="3" step="1">
+                        <span class="slider-value" id="silence-threshold-value">3</span>
                     </div>
                 </div>
             </div>
@@ -518,31 +529,41 @@
         const sensitivityValue = document.getElementById('sensitivity-value');
         const thresholdSlider = document.getElementById('threshold-slider');
         const thresholdValue = document.getElementById('threshold-value');
-        const thresholdDurationSlider = document.getElementById('threshold-duration-slider');
-        const thresholdDurationValue = document.getElementById('threshold-duration-value');
+        const noiseDurationSlider = document.getElementById('sound-duration-slider');
+        const noiseDurationValue = document.getElementById('sound-duration-value');
+        const silenceThresholdSlider= document.getElementById('silence-threshold-slider');
+        const silenceThresholdValue = document.getElementById('silence-threshold-value');
         const startStopInput = document.getElementById('start-stop-input');
         const testMicrophoneCheckbox = document.getElementById('test-microphone-checkbox');
         const resultsList = document.getElementById('results');
         const buffer = document.getElementById('buffer');
         const loadingDialog = document.getElementById('loading-dialog');
-
+    
         let audioContext;
         let microphone;
         let scriptProcessor;
         let gainNode;
         let intervalId;
-        let intervalIdWf;
+        let isProcessing = false;
         let sensitivity = 1.0;
         let threshold = 50;
-        let duration = 2;
+        let noiseDuration = 3;
+        let silenceThreshold = 3;
+        let noiseDurationCount = 0;
+        let silenceThresholdCount = 0;
         let holdClasses = [];
-
+    
         sensitivitySlider.addEventListener('input', updateSensitivity);
+
         thresholdSlider.addEventListener('input', updateThresholdDisplay);
-        thresholdDurationSlider.addEventListener('input', updateThresholdDurationDisplay);
+
+        noiseDurationSlider.addEventListener('input', updateNoiseDurationDisplay);
+
+        silenceThresholdSlider.addEventListener('input', updateSilenceThresholdDisplay)
+
         startStopInput.addEventListener('change', toggleProcessing);
         testMicrophoneCheckbox.addEventListener('change', toggleMicrophoneTesting);
-
+    
         function updateSensitivity(event) {
             sensitivity = parseFloat(event.target.value);
             sensitivityValue.textContent = sensitivity;
@@ -550,96 +571,137 @@
                 gainNode.gain.value = sensitivity;
             }
         }
-
+    
         function updateThresholdDisplay(event) {
             threshold = parseInt(event.target.value, 10);
             thresholdValue.textContent = `${threshold} dB`;
         }
-
-        function updateThresholdDurationDisplay(event) {
-            duration = parseInt(event.target.value, 10);
-            thresholdDurationValue.textContent = `${duration} sec`;
+    
+        function updateNoiseDurationDisplay(event) {
+            noiseDuration = parseInt(event.target.value, 10);
+            noiseDurationValue.textContent = `${noiseDuration}`;
         }
 
+        function updateSilenceThresholdDisplay(event) {
+            silenceThreshold = parseInt(event.target.value, 10);
+            silenceThresholdValue.textContent = `${silenceThreshold}`;
+        }
+    
         function toggleProcessing() {
             if (startStopInput.checked) {
                 if (testMicrophoneCheckbox.checked) {
                     testMicrophoneCheckbox.checked = false;
                     stopTestingMicrophone();
                 }
+                disableSliders(true);
                 showLoadingDialog();
                 startProcessing();
             } else {
+                disableSliders(false);
                 showLoadingDialog();
                 stopProcessing();
             }
         }
+        function disableSliders(disable){
+            sensitivitySlider.disabled = disable;
+            thresholdSlider.disabled = disable;
+            noiseDurationSlider.disabled = disable;
+            silenceThresholdSlider.disabled = disable;
+        }
 
         function startProcessing() {
-            stopProcessing(); 
+            stopProcessing();
+    
+            isProcessing = true;
+            intervalId = setInterval(fetchData, 1000); // Start the regular interval fetching process
 
-            buffer.style.display = 'block'; 
-            loadingDialog.style.display = 'block'; 
-
+            buffer.style.display = 'block';
+            loadingDialog.style.display = 'block';
+    
             setTimeout(() => {
-                intervalId = setInterval(fetchData, 1000); 
-                hideLoadingDialog(); 
-            }, 3000); 
+                hideLoadingDialog();
+            }, 1000);
         }
-
+    
         function stopProcessing() {
+            isProcessing = false;
+            clearInterval(intervalId);
 
-            buffer.style.display = 'block'; 
-            loadingDialog.style.display = 'block'; 
+            buffer.style.display = 'block';
+            loadingDialog.style.display = 'block';
 
             setTimeout(() => {
-                clearInterval(intervalId);
-                clearInterval(intervalIdWf);
-                hideLoadingDialog(); 
+                hideLoadingDialog();
             }, 3000);
         }
-
+    
         function showLoadingDialog() {
             loadingDialog.style.display = 'block';
         }
-
+    
         function hideLoadingDialog() {
             loadingDialog.style.display = 'none';
-            buffer.style.display = 'none'; 
+            buffer.style.display = 'none';
         }
-
-        function fetchData() {
+    
+        async function fetchData() {
+            const li = document.createElement('li');
             const currentDate = new Date();
             const currentTime = currentDate.toLocaleString();
-
-            fetch(`/classify_audio?sensitivity=${sensitivity}`)
-                .then(response => response.json())
-                .then(data => {
-                    const li = document.createElement('li');
-                    li.textContent = `${currentTime}, Class: ${data.class}, DB: ${data.db.toFixed(2)}`;
-
-                    if (data.db.toFixed(2) >= threshold) {
-                        holdClasses.push(data.class);
-                        if (holdClasses.length > duration) {
-                            holdClasses.shift();
-                        }
-                    } else {
-                        holdClasses = [];
-                    }
-
-                    if (holdClasses.length === duration && holdClasses.every(elem => elem === data.class)) {
+            if (!isProcessing) {
+                li.textContent = '--- end ---';
+                resultsList.appendChild(li);
+                return; // Prevent further execution if processing has stopped
+            }
+    
+            try {
+                const response = await fetch(`/classify_audio?sensitivity=${sensitivity}`);
+                const data = await response.json();
+                li.textContent = `${currentTime}, Class: ${data.class}, DB: ${data.db.toFixed(2)}`;
+    
+                //edit
+                if(data.db.toFixed(2) >= threshold){
+                    if(noiseDurationCount == noiseDuration){
                         li.textContent += ' - Ring';
-                        holdClasses = [];
+                        noiseDurationCount = 0;
                     }
-                    resultsList.appendChild(li);
-                })
-                .catch(error => console.error('Error fetching data:', error));
+                    else{
+                        noiseDurationCount++;
+                    }
+                }
+                else{
+                    if(silenceThresholdCount == silenceThreshold){
+                        silenceThresholdCount = 0;
+                        noiseDurationCount = 0;
+                    }
+                    else{
+                        silenceThresholdCount++;
+                    }
+                }
+                // if (data.db.toFixed(2) >= threshold) {
+                //     holdClasses.push(data.class);
+                //     if (holdClasses.length > noiseDuration) {
+                //         holdClasses.shift();
+                //     }
+                // } else {
+                //     holdClasses = [];
+                // }
+    
+                // if (holdClasses.length === noiseDuration && holdClasses.every(elem => elem === data.class)) {
+                //     li.textContent += ' - Ring';
+                //     holdClasses = [];
+                // }
+                //edit
+                resultsList.appendChild(li);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
         }
-
+    
         function toggleMicrophoneTesting() {
+            disableSliders(false);
             if (testMicrophoneCheckbox.checked) {
                 clearInterval(intervalId);
-                clearInterval(intervalIdWf);
                 if (audioContext) {
                     audioContext.close();
                 }
@@ -647,28 +709,28 @@
                     startStopInput.checked = false;
                     stopProcessing();
                 }
-
+    
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 gainNode = audioContext.createGain();
                 gainNode.gain.value = sensitivity;
-
+    
                 navigator.mediaDevices.getUserMedia({ audio: true })
                     .then(stream => {
                         microphone = audioContext.createMediaStreamSource(stream);
                         scriptProcessor = audioContext.createScriptProcessor(1024, 1, 1);
-
+    
                         microphone.connect(gainNode);
                         gainNode.connect(scriptProcessor);
                         scriptProcessor.connect(audioContext.destination);
-
+    
                         scriptProcessor.onaudioprocess = (event) => {
                             const inputBuffer = event.inputBuffer;
                             const outputBuffer = event.outputBuffer;
-
+    
                             for (let channel = 0; channel < inputBuffer.numberOfChannels; channel++) {
                                 const inputData = inputBuffer.getChannelData(channel);
                                 const outputData = outputBuffer.getChannelData(channel);
-
+    
                                 let rms = 0;
                                 for (let sample = 0; sample < inputBuffer.length; sample++) {
                                     outputData[sample] = inputData[sample];
@@ -684,7 +746,7 @@
                 stopTestingMicrophone();
             }
         }
-
+    
         function stopTestingMicrophone() {
             if (scriptProcessor) {
                 scriptProcessor.disconnect();
