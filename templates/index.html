@@ -662,7 +662,14 @@
                 //edit
                 if(data.db.toFixed(2) >= threshold){
                     if(noiseDurationCount == noiseDuration){
-                        li.textContent += ' - Ring';
+                        //Ring
+                        const response = await fetch('/ring');
+                        if (response.ok) {
+                            console.log('Ring endpoint called successfully');
+                            li.textContent += ' - Ring';
+                        } else {
+                            console.error('Failed to call ring endpoint:', response.status);
+                        }
                         noiseDurationCount = 0;
                     }
                     else{

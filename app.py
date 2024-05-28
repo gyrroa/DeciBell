@@ -38,6 +38,12 @@ def calculate_db(rms_amplitude, ref=0.00002):
 def index():
     return render_template('index.html')
 
+@app.route('/ring')
+def ring():
+    #testing
+    print('Ring')
+    return 'Ring endpoint called successfully', 200
+
 @app.route('/classify_audio')
 def classify_audio():
     sample_rate = 16000
