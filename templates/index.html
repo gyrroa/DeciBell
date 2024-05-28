@@ -661,7 +661,13 @@
     
                 if(data.db.toFixed(2) >= threshold){
                     if(noiseDurationCount == noiseDuration){
-                        li.textContent += ' - Ring';
+                        const response = await fetch('http://192.168.1.15:5000/ring');
+                        if (response.ok) {
+                            li.textContent += ' - Ring';
+                            console.log('Ring endpoint called successfully');
+                        } else {
+                            console.error('Failed to call ring endpoint:', response.status);
+                        }
                         noiseDurationCount = 0;
                     }
                     else{

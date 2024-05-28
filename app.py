@@ -1,12 +1,14 @@
 from flask import Flask, render_template, jsonify, request
+from flask_cors import CORS
 import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
 import csv
 import base64
 from io import BytesIO
-
+import requests
 app = Flask(__name__)
+CORS(app)
 
 # Load the YAMNet model for general sound classification
 yamnet_model = hub.load('https://tfhub.dev/google/yamnet/1')
@@ -40,6 +42,17 @@ def index():
 @app.route('/ring')
 def ring():
     print("Ring")
+
+    # Send a request to the ESP32 to trigger the buzzer
+    esp32_url = 'http://192.168.1.15:5000/activate_buzzer'
+    try:
+        response = requests.get(esp32_url)
+        if response.status_code == 200:
+            return 'Ring endpoint called successfully, ESP32 buzzer activated', 200
+        else:
+            return 'Failed to activate ESP32 buzzer', response.status_code
+    except requests.exceptions.RequestException as e:
+        return str(e), 500
 
 @app.route('/receive_audio', methods=['POST'])
 def receive_audio():
