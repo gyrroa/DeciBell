@@ -3,17 +3,16 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
 import csv
-import pyaudio
-import math
+import base64
+from io import BytesIO
 
 app = Flask(__name__)
 
 # Load the YAMNet model for general sound classification
 yamnet_model = hub.load('https://tfhub.dev/google/yamnet/1')
 
-# Find the name of the class with the top score when mean-aggregated across frames.
+# Function to load class names from CSV
 def class_names_from_csv(class_map_csv_text):
-    """Returns list of class names corresponding to score vector."""
     class_names = []
     with tf.io.gfile.GFile(class_map_csv_text) as csvfile:
         reader = csv.DictReader(csvfile)
@@ -29,56 +28,85 @@ def calculate_rms(audio_data):
     rms = np.sqrt(np.mean(np.square(audio_data)))
     return rms
 
-# Function to calculate Decibell
+# Function to calculate Decibel
 def calculate_db(rms_amplitude, ref=0.00002):
-    db = 20 * math.log10(rms_amplitude / ref)
+    db = 20 * np.log10(rms_amplitude / ref)
     return db
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
+@app.route('/receive_audio', methods=['POST'])
+def receive_audio():
+    audio_data = request.json.get('data')
+    if not audio_data:
+        return jsonify({"error": "No audio data provided"}), 400
+
+    # Decode the Base64 encoded audio data
+    audio_bytes = BytesIO(base64.b64decode(audio_data))
+
+    # Convert the bytes to a NumPy array of the appropriate type
+    audio_frames = np.frombuffer(audio_bytes.read(), dtype=np.int16)
+
+    # Normalize the waveform to -1 to 1 range
+    waveform = audio_frames / np.iinfo(np.int16).max
+
+    # Save the waveform for later use
+    global last_waveform
+    last_waveform = waveform
+
+    print("Received and decoded audio data:")
+    print(f"Waveform shape: {waveform.shape}")
+    print(f"Waveform first 10 samples: {waveform[:10]}")
+
+    return jsonify({"message": "Audio data received successfully"}), 200
+
 @app.route('/classify_audio')
 def classify_audio():
-    sample_rate = 16000
-    record_duration = 1
+    sensitivity = float(request.args.get('sensitivity', 1))  # Default sensitivity is 1
 
-    sensitivity = float(request.args.get('sensitivity', 1.0))
+    global last_waveform
+    if last_waveform is None:
+        return jsonify({"error": "No audio data available"}), 400
 
-    p = pyaudio.PyAudio()
-    stream = p.open(format=pyaudio.paInt16, channels=1, rate=sample_rate, input=True, frames_per_buffer=1024)
-
-    frames = []
-    for _ in range(int(sample_rate * record_duration / 1024)):
-        data = stream.read(1024)
-        frames.append(data)
-
-    audio_data = b''.join(frames)
-    waveform = np.frombuffer(audio_data, dtype=np.int16) / np.iinfo(np.int16).max
-
-    # Adjust waveform based on sensitivity
-    waveform *= sensitivity
+    waveform = last_waveform
 
     # Calculate RMS amplitude
     rms_amplitude = calculate_rms(waveform)
-    # Calculate Decibell
+    # Calculate Decibel
     decibel = calculate_db(rms_amplitude)
+
+    print(f"RMS Amplitude: {rms_amplitude}")
+    print(f"Decibel: {decibel}")
+
     # Use YAMNet model to classify sound
     scores, _, _ = yamnet_model(waveform)
-    top_class_index = scores.numpy().mean(axis=0).argmax()
+    mean_scores = scores.numpy().mean(axis=0)
+    top_class_index = mean_scores.argmax()
     inferred_class = class_names[top_class_index]
 
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
+    print(f"Inferred Class: {inferred_class}")
+    print(f"Scores: {mean_scores}")
+
+    # Apply sensitivity adjustment to decibel level
+    adjusted_decibel = decibel * sensitivity
 
     result = {
         "class": inferred_class,
         "rms": rms_amplitude,
-        "db": decibel,
-        "waveform": waveform.tolist()  # Convert waveform to list
+        "db": adjusted_decibel
     }
     return jsonify(result)
+#test
+@app.route('/last_waveform')
+def get_last_waveform():
+    global last_waveform
+    if last_waveform is None:
+        return jsonify({"error": "No waveform available"}), 400
+
+    return jsonify({"waveform": last_waveform.tolist()}), 200
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    last_waveform = None
+    app.run(host='0.0.0.0', port=5000, debug=True)
