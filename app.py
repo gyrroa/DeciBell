@@ -3,12 +3,11 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
 import csv
-import pyaudio
-import math
 import requests
+import math
 
 app = Flask(__name__)
-
+esp32Address = "192.168.1.5"
 # Load the YAMNet model for general sound classification
 yamnet_model = hub.load('https://tfhub.dev/google/yamnet/1')
 
@@ -44,28 +43,13 @@ def index():
 def ring():
     try:
         # Send request to ESP32 to ring the buzzer
-        response = requests.get(f'http://10.15.11.92/ring')
+        response = requests.get(f'http://{esp32Address}/ring')
         if response.status_code == 200:
             return jsonify({'status': 'success', 'message': 'Buzzer rang successfully!'})
         else:
             return jsonify({'status': 'fail', 'message': 'Failed to ring buzzer'}), 500
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
-    
-def list_input_devices():
-    p = pyaudio.PyAudio()
-    info = p.get_host_api_info_by_index(0)
-    num_devices = info.get('deviceCount')
-
-    print("Available audio input devices:")
-    for i in range(0, num_devices):
-        device_info = p.get_device_info_by_host_api_device_index(0, i)
-        if device_info.get('maxInputChannels') > 0:
-            print(f"Device ID: {i} - {device_info.get('name')}")
-
-    p.terminate()
-
-list_input_devices()    
 
 @app.route('/classify_audio')
 def classify_audio():
@@ -74,15 +58,16 @@ def classify_audio():
 
     sensitivity = float(request.args.get('sensitivity', 1.0))
 
-    p = pyaudio.PyAudio()
-    stream = p.open(format=pyaudio.paInt16, channels=1, rate=sample_rate, input=True, frames_per_buffer=1024, input_device_index=1)
+    # Fetch audio data from ESP32
+    try:
+        response = requests.get(f'http://{esp32Address}/audio_stream')
+        if response.status_code == 200:
+            audio_data = response.content
+        else:
+            return jsonify({'status': 'fail', 'message': 'Failed to get audio data from ESP32'}), 500
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
-    frames = []
-    for _ in range(int(sample_rate * record_duration / 1024)):
-        data = stream.read(1024)
-        frames.append(data)
-
-    audio_data = b''.join(frames)
     waveform = np.frombuffer(audio_data, dtype=np.int16) / np.iinfo(np.int16).max
 
     # Adjust waveform based on sensitivity
@@ -96,10 +81,6 @@ def classify_audio():
     scores, _, _ = yamnet_model(waveform)
     top_class_index = scores.numpy().mean(axis=0).argmax()
     inferred_class = class_names[top_class_index]
-
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
 
     result = {
         "class": inferred_class,
