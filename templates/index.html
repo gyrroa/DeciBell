@@ -658,47 +658,35 @@
                 const response = await fetch(`/classify_audio?sensitivity=${sensitivity}`);
                 const data = await response.json();
                 li.textContent = `${currentTime}, Class: ${data.class}, DB: ${data.db.toFixed(2)}`;
-    
-                //edit
-                if(data.db.toFixed(2) >= threshold){
-                    if(noiseDurationCount == noiseDuration){
-                        //Ring
-                        const response = await fetch('/ring');
-                        if (response.ok) {
-                            console.log('Ring endpoint called successfully');
-                            li.textContent += ' - Ring';
-                        } else {
-                            console.error('Failed to call ring endpoint:', response.status);
-                        }
+
+                if (data.db.toFixed(2) >= threshold) {
+                    if (noiseDurationCount == noiseDuration) {
+                        // Ring
+                        fetch('/ring', {
+                            method: 'POST'
+                        }).then(ringResponse => {
+                            if (ringResponse.ok) {
+                                console.log('Ring endpoint called successfully');
+                                li.textContent += ' - Ring';
+                            } else {
+                                console.error('Failed to call ring endpoint:', ringResponse.status);
+                            }
+                        }).catch(error => {
+                            console.error('Error calling ring endpoint:', error);
+                        });
                         noiseDurationCount = 0;
-                    }
-                    else{
+                        silenceThresholdCount = 0;
+                    } else {
                         noiseDurationCount++;
                     }
-                }
-                else{
-                    if(silenceThresholdCount == silenceThreshold){
+                } else {
+                    if (silenceThresholdCount == silenceThreshold) {
                         silenceThresholdCount = 0;
                         noiseDurationCount = 0;
-                    }
-                    else{
+                    } else {
                         silenceThresholdCount++;
                     }
                 }
-                // if (data.db.toFixed(2) >= threshold) {
-                //     holdClasses.push(data.class);
-                //     if (holdClasses.length > noiseDuration) {
-                //         holdClasses.shift();
-                //     }
-                // } else {
-                //     holdClasses = [];
-                // }
-    
-                // if (holdClasses.length === noiseDuration && holdClasses.every(elem => elem === data.class)) {
-                //     li.textContent += ' - Ring';
-                //     holdClasses = [];
-                // }
-                //edit
                 resultsList.appendChild(li);
             } catch (error) {
                 console.error('Error fetching data:', error);

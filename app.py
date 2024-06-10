@@ -5,6 +5,7 @@ import numpy as np
 import csv
 import pyaudio
 import math
+import requests
 
 app = Flask(__name__)
 
@@ -38,11 +39,33 @@ def calculate_db(rms_amplitude, ref=0.00002):
 def index():
     return render_template('index.html')
 
-@app.route('/ring')
+
+@app.route('/ring', methods=['POST'])
 def ring():
-    #testing
-    print('Ring')
-    return 'Ring endpoint called successfully', 200
+    try:
+        # Send request to ESP32 to ring the buzzer
+        response = requests.get(f'http://10.15.11.92/ring')
+        if response.status_code == 200:
+            return jsonify({'status': 'success', 'message': 'Buzzer rang successfully!'})
+        else:
+            return jsonify({'status': 'fail', 'message': 'Failed to ring buzzer'}), 500
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    
+def list_input_devices():
+    p = pyaudio.PyAudio()
+    info = p.get_host_api_info_by_index(0)
+    num_devices = info.get('deviceCount')
+
+    print("Available audio input devices:")
+    for i in range(0, num_devices):
+        device_info = p.get_device_info_by_host_api_device_index(0, i)
+        if device_info.get('maxInputChannels') > 0:
+            print(f"Device ID: {i} - {device_info.get('name')}")
+
+    p.terminate()
+
+list_input_devices()    
 
 @app.route('/classify_audio')
 def classify_audio():
@@ -52,7 +75,7 @@ def classify_audio():
     sensitivity = float(request.args.get('sensitivity', 1.0))
 
     p = pyaudio.PyAudio()
-    stream = p.open(format=pyaudio.paInt16, channels=1, rate=sample_rate, input=True, frames_per_buffer=1024)
+    stream = p.open(format=pyaudio.paInt16, channels=1, rate=sample_rate, input=True, frames_per_buffer=1024, input_device_index=1)
 
     frames = []
     for _ in range(int(sample_rate * record_duration / 1024)):
@@ -87,4 +110,4 @@ def classify_audio():
     return jsonify(result)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
