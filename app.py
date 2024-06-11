@@ -7,7 +7,7 @@ import requests
 import math
 
 app = Flask(__name__)
-esp32Address = "192.168.1.5"
+esp32Address = "10.15.25.91"
 # Load the YAMNet model for general sound classification
 yamnet_model = hub.load('https://tfhub.dev/google/yamnet/1')
 
@@ -48,47 +48,45 @@ def ring():
             return jsonify({'status': 'success', 'message': 'Buzzer rang successfully!'})
         else:
             return jsonify({'status': 'fail', 'message': 'Failed to ring buzzer'}), 500
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/classify_audio')
 def classify_audio():
-    sample_rate = 16000
-    record_duration = 1
-
-    sensitivity = float(request.args.get('sensitivity', 1.0))
-
-    # Fetch audio data from ESP32
     try:
+        sample_rate = 16000
+        record_duration = 1
+
+        sensitivity = float(request.args.get('sensitivity', 1.0))
+
+        # Fetch audio data from ESP32
         response = requests.get(f'http://{esp32Address}/audio_stream')
-        if response.status_code == 200:
-            audio_data = response.content
-        else:
-            return jsonify({'status': 'fail', 'message': 'Failed to get audio data from ESP32'}), 500
-    except Exception as e:
+        response.raise_for_status()  # Raise an exception for non-200 responses
+        audio_data = response.content
+
+        waveform = np.frombuffer(audio_data, dtype=np.int16) / np.iinfo(np.int16).max
+
+        # Adjust waveform based on sensitivity
+        waveform *= sensitivity
+
+        # Calculate RMS amplitude
+        rms_amplitude = calculate_rms(waveform)
+        # Calculate Decibel
+        decibel = calculate_db(rms_amplitude)
+        # Use YAMNet model to classify sound
+        scores, _, _ = yamnet_model(waveform)
+        top_class_index = scores.numpy().mean(axis=0).argmax()
+        inferred_class = class_names[top_class_index]
+
+        result = {
+            "class": inferred_class,
+            "rms": rms_amplitude,
+            "db": decibel,
+            "waveform": waveform.tolist()  # Convert waveform to list
+        }
+        return jsonify(result)
+    except (requests.exceptions.RequestException, ValueError) as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
-
-    waveform = np.frombuffer(audio_data, dtype=np.int16) / np.iinfo(np.int16).max
-
-    # Adjust waveform based on sensitivity
-    waveform *= sensitivity
-
-    # Calculate RMS amplitude
-    rms_amplitude = calculate_rms(waveform)
-    # Calculate Decibell
-    decibel = calculate_db(rms_amplitude)
-    # Use YAMNet model to classify sound
-    scores, _, _ = yamnet_model(waveform)
-    top_class_index = scores.numpy().mean(axis=0).argmax()
-    inferred_class = class_names[top_class_index]
-
-    result = {
-        "class": inferred_class,
-        "rms": rms_amplitude,
-        "db": decibel,
-        "waveform": waveform.tolist()  # Convert waveform to list
-    }
-    return jsonify(result)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
