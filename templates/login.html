@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeciBell</title>
+    <style>
+        *{
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .window{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(145deg, #fff, #e6dfc5);
+        }
+        
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: linear-gradient(145deg, #fff, #e6dfc5);
+            box-shadow:  20px 20px 60px #aba693,
+                        -20px -20px 60px #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 20px;
+        }
+
+        .form input {
+            border: none;
+            padding: 10px 10px;
+            border-radius: 5px;
+            transition: .5s;
+            font-size: 20px;
+            background: linear-gradient(145deg, #fff, #e6dfc5);
+            box-shadow: inset 20px 20px 60px #d6d1ba,
+                        inset -20px -20px 60px #ffffff;
+        }
+
+
+        .form button {
+            width: 100%;
+            color: white;
+            transition: .5s;
+            font-size: 20px;
+            outline: none;
+            border: none;
+            height: 45px;
+            border-radius: 5px;
+            background: linear-gradient(145deg, #d6d1ba, #aba693);
+            align-self: flex-end;
+            transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .form button:hover{
+            background: linear-gradient(145deg, #e9e3cb, #bdb8a3);
+            cursor: pointer;
+        }
+
+        .form button:active{
+            scale: 1.05;
+        }
+    </style>
+</head>
+<body>
+    <div class="window">
+        <form class="form" id="login-form" action="/login" method="post">
+            <h1>Log In</h1>
+            <input type="text" class="input" placeholder="Name" name="name" required>
+            <input type="password" class="input" placeholder="Password" name="password" required> 
+            <button type="submit" id="login-button">Submit</button>
+        </form>
+    </div>
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            login();
+        });
+    
+        function login() {
+            const formData = new FormData(document.getElementById('login-form'));
+    
+            fetch('/login', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else if (!response.ok) {
+                    throw new Error('Network response was not ok.');
+                } else {
+                    return response.text();
+                }
+            })
+            .then(data => {
+                // Handle non-redirect responses here if needed
+                console.log('Login response:', data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Add code here to handle errors, such as displaying an error message to the user
+            });
+        }
+    </script>
+</body>
+</html>

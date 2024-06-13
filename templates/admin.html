@@ -19,16 +19,22 @@
             background: linear-gradient(145deg, #fff, #e6dfc5);
         }
         .admin-panel{
-            width: 1050px;
+            gap: 60%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            width: 650px;
             padding: 20px;
-            margin: 40px;
-            height: 100px;  
+            margin: 40px 40px 0px 40px;
+            height: 50px;  
             border-radius: 10px;
             background: linear-gradient(145deg, #fff, #e6dfc5);
             box-shadow:  20px 20px 60px #aba693,
                         -20px -20px 60px #ffffff;
         }
         .settings{
+            gap: 160%;
             padding: 20px;
             margin: 40px;
             height: 450px;
@@ -48,7 +54,7 @@
         .results-container {
             margin: 40px 40px 40px 0px;
             padding: 50px;
-            width: 500px;
+            width: 550px;
             height: 390px;
             max-height: 390px;
             overflow-y: auto; 
@@ -57,11 +63,12 @@
             box-shadow:  20px 20px 60px #aba693,
                         -20px -20px 60px #ffffff;
         }
+
         .application{
             align-items: center;
-            margin: auto;
+            margin: 50px;
             justify-content: space-between;
-            width: 60vw;
+            width: 1200px;
             display: flex;
             flex-direction: row;
             border-radius: 10px;
@@ -69,13 +76,8 @@
             box-shadow: inset 20px 20px 60px #aba693,
                         inset -20px -20px 60px #ffffff;
         }
-        .checkbox-wrapper{
-            align-items: center;
-            display: flex;
-            justify-content: space-between;
-        }
-        /*mic*/
-        .switch {
+        /*ring*/
+        #manual-ring-button + .switch{
             position: relative;
             width: 48px;
             height: 48px;
@@ -88,45 +90,60 @@
             cursor: pointer;
             transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+        #logout-button + .switch {
+            position: relative;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(145deg, #9b9b9b,#4a4942);
+            color: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
 
-        .mic-on{
+        #logout-button + .switch:hover {
+            background: linear-gradient(145deg, #4a4942, #3c3c3c);
+        }
+
+        .button-icon{
             width: 100%;
             height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
             transition: all .3s ease-in-out;
-        }
-
-        .mic-on {
             z-index: 4;
         }
-        .switch:hover {
+
+        #manual-ring-button + .switch:hover {
             background: linear-gradient(145deg, #ffcf40, #bf9b30);
         }
 
-        #manual-ring-button {
+        #manual-ring-button, #logout-button{
             display: none;
         }
 
-        #manual-ring-button:checked + .switch {
+        #manual-ring-button:checked + .switch,  #logout-button:checked + .switch {
             background: linear-gradient(90deg, #ff4d4d, #ff9999);
 
         }
 
-        #manual-ring-button:checked + .switch .mic-off {
-            opacity: 1;
-        }
-
-        #manual-ring-button:active + .switch {
+        #manual-ring-button:active + .switch, #logout-button:active + .switch {
             scale: 1.2;
         }
         /* start */
+        .checkbox-wrapper{
+            align-items: center;
+            display: flex;
+            justify-content: space-between;
+        }
         .checkbox-wrapper .start-stop {
             --size: 40px;
-            position: relative;background: 
-            linear-gradient(90deg, #32a852, #a3f09d);
-
+            position: relative;
+            background: linear-gradient(90deg, #32a852, #a3f09d);
             line-height: 0;
             perspective: 400px;
             font-size: var(--size);
@@ -449,22 +466,121 @@
             display: inline-block;
             margin: 0 16px;
         }
-
+        /*notification*/
+        .notifications{
+            position: fixed;
+            top: 30px;
+            right: 20px;
+        }
+        .toast{
+            position: relative;
+            padding: 10px;
+            color: rgb(0, 0, 136);
+            margin-bottom: 10px;
+            width: 400px;
+            display: grid;
+            grid-template-columns: 70px 1fr 70px;
+            border-radius: 5px;
+            --color: #3498db;
+            background-image: 
+                linear-gradient(
+                    to right, #2196f3, #87ceeb 90%
+                ); 
+            animation: show 0.3s ease 1 forwards  
+        }
+        .toast i{
+            color: var(--color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: x-large;
+        }
+        .toast .title{
+            font-size: x-large;
+            font-weight: bold;
+        }
+        .toast span, .toast i:nth-child(3){
+            color: black;
+            opacity: 0.8;
+        }
+        @keyframes show{
+            0%{
+                transform: translateX(100%);
+            }
+            40%{
+                transform: translateX(-5%);
+            }
+            80%{
+                transform: translateX(0%);
+            }
+            100%{
+                transform: translateX(-10%);
+            }
+        }
+        .toast::before{
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            background-color: var(--color);
+            width: 100%;
+            height: 3px;
+            content: '';
+            box-shadow: 0 0 10px var(--color);
+            animation: timeOut 5s linear 1 forwards
+        }
+        @keyframes timeOut{
+            to{
+                width: 0;
+            }
+        }
+        .toast.ring{
+            color: rgb(136, 0, 0);
+            --color: #f24d4c;
+            background-image: 
+                linear-gradient(
+                    to right, #ff3737, #ffa07a 90%
+                );
+        }
+        .toast.warnear{
+            color: rgb(136, 136, 0);
+            --color: #e9bd0c;
+            background-image: 
+                linear-gradient(
+                    to right, #f7dc6f, #ffffa6 90%
+                );
+        }
+        .toast.warning{
+            color: rgb(136, 88, 0);
+            --color: orange;
+            background-image: 
+                linear-gradient(
+                    to right, #ffa07a, #ffc966 90%
+                );
+        }
     </style>
 </head>
 <body>
+    <div class="notifications"></div>
     <div class="window">
-        <div class="admin-panel">Admin Panel</div>
+        <div class="admin-panel">
+            <h1>Admin</h1>
+            <input type="button" id="logout-button" value="Logout">
+            <label class="switch" for="logout-button">
+                <div class="button-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 512 512"><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M497 273L329 441c-15 15-41 4.5-41-17v-96H152c-13.3 0-24-10.7-24-24v-96c0-13.3 10.7-24 24-24h136V88c0-21.4 25.9-32 41-17l168 168c9.3 9.4 9.3 24.6 0 34zM192 436v-40c0-6.6-5.4-12-12-12H96c-17.7 0-32-14.3-32-32V160c0-17.7 14.3-32 32-32h84c6.6 0 12-5.4 12-12V76c0-6.6-5.4-12-12-12H96c-53 0-96 43-96 96v192c0 53 43 96 96 96h84c6.6 0 12-5.4 12-12z"/></svg>
+                </div>
+            </label>
+        </div>
         <div class="application">
             <div class="settings">
                 <div class="checkbox-wrapper">
                     <div class="start-stop">
-                    <input id="start-stop-input" type="checkbox">
-                    <label for="start-stop-input"></label>
+                        <input id="start-stop-input" type="checkbox">
+                        <label for="start-stop-input"></label>
                     </div>
                     <input type="button" id="manual-ring-button">
                     <label class="switch" for="manual-ring-button">
-                        <div class="mic-on">
+                        <div class="button-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-mic-fill" viewBox="0 0 448 512"><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M224 0c-17.7 0-32 14.3-32 32V51.2C119 66 64 130.6 64 208v18.8c0 47-17.3 92.4-48.5 127.6l-7.4 8.3c-8.4 9.4-10.4 22.9-5.3 34.4S19.4 416 32 416H416c12.6 0 24-7.4 29.2-18.9s3.1-25-5.3-34.4l-7.4-8.3C401.3 319.2 384 273.9 384 226.8V208c0-77.4-55-142-128-156.8V32c0-17.7-14.3-32-32-32zm45.3 493.3c12-12 18.7-28.3 18.7-45.3H224 160c0 17 6.7 33.3 18.7 45.3s28.3 18.7 45.3 18.7s33.3-6.7 45.3-18.7z"/></svg>
                         </div>
                     </label>
@@ -473,8 +589,8 @@
                 <div class="sliders">
                     <label for="sensitivity-slider">Microphone Sensitivity:</label>
                     <div class = "slider-info">
-                        <input class="slider" type="range" id="sensitivity-slider" min="0.1" max="2.0" value="1.3" step="0.1">
-                        <span class="slider-value" id="sensitivity-value">1.3</span>
+                        <input class="slider" type="range" id="sensitivity-slider" min="0.1" max="2.0" value="1.0" step="0.1">
+                        <span class="slider-value" id="sensitivity-value">1.0</span>
                     </div>
                     <br>
                     <label for="threshold-slider">Acceptable Loudness Level:</label>
@@ -485,14 +601,14 @@
                     <br>
                     <label for="sound-duration-slider">Sound Duration:</label>
                     <div class = "slider-info">
-                        <input class="slider" type="range" id="sound-duration-slider" min="1" max="5" value="3" step="1">
-                        <span class="slider-value" id="sound-duration-value">3</span>
+                        <input class="slider" type="range" id="sound-duration-slider" min="1" max="5" value="2" step="1">
+                        <span class="slider-value" id="sound-duration-value">2</span>
                     </div>
                     <br>
                     <label for="silence-threshold-slider">Silence Threshold:</label>
                     <div class = "slider-info">
-                        <input class="slider" type="range" id="silence-threshold-slider" min="1" max="5" value="3" step="1">
-                        <span class="slider-value" id="silence-threshold-value">3</span>
+                        <input class="slider" type="range" id="silence-threshold-slider" min="1" max="5" value="2" step="1">
+                        <span class="slider-value" id="silence-threshold-value">2</span>
                     </div>
                 </div>
             </div>
@@ -536,20 +652,18 @@
         const resultsList = document.getElementById('results');
         const buffer = document.getElementById('buffer');
         const loadingDialog = document.getElementById('loading-dialog');
-    
-        let audioContext;
-        let microphone;
-        let scriptProcessor;
+        const logOutButton = document.getElementById('logout-button');
+
+        let soundClass = "None";
         let gainNode;
         let intervalId;
         let isProcessing = false;
         let sensitivity = 1.0;
         let threshold = 50;
-        let noiseDuration = 3;
-        let silenceThreshold = 3;
+        let noiseDuration = 2;
+        let silenceThreshold = 2;
         let noiseDurationCount = 0;
         let silenceThresholdCount = 0;
-        let holdClasses = [];
     
         sensitivitySlider.addEventListener('input', updateSensitivity);
 
@@ -557,12 +671,23 @@
 
         noiseDurationSlider.addEventListener('input', updateNoiseDurationDisplay);
 
-        silenceThresholdSlider.addEventListener('input', updateSilenceThresholdDisplay)
+        silenceThresholdSlider.addEventListener('input', updateSilenceThresholdDisplay);
 
         startStopInput.addEventListener('change', toggleProcessing);
 
         manualRingButton.addEventListener('click', toggleManualRing);
     
+        logOutButton.addEventListener('click', logout);
+
+        function logout() {
+            toggleProcessing();
+            fetch('/logout')
+                .then(response => response.text())
+                .then(data => {
+                    document.body.innerHTML = data;
+                })
+                .catch(error => console.error('Error:', error));
+        }
         function updateSensitivity(event) {
             sensitivity = parseFloat(event.target.value);
             sensitivityValue.textContent = sensitivity;
@@ -652,9 +777,12 @@
             try {
                 const response = await fetch(`/classify_audio?sensitivity=${sensitivity}`);
                 const data = await response.json();
-                li.textContent = `${currentTime}, Class: ${data.class}, DB: ${data.db.toFixed(2)}`;
+                soundClass = data.class;
+                li.textContent = `${currentTime}, Class: ${soundClass}, DB: ${data.db.toFixed(2)}`;
 
                 if (data.db.toFixed(2) >= threshold) {
+                    warning(soundClass);
+                    li.textContent += ' - Warning';
                     if (noiseDurationCount == noiseDuration) {
                         // Ring
                         fetch('/ring', {
@@ -662,6 +790,7 @@
                         }).then(ringResponse => {
                             if (ringResponse.ok) {
                                 console.log('Ring endpoint called successfully');
+                                ring(soundClass);
                                 li.textContent += ' - Ring';
                             } else {
                                 console.error('Failed to call ring endpoint:', ringResponse.status);
@@ -674,6 +803,8 @@
                     } else {
                         noiseDurationCount++;
                     }
+                } else if (data.db.toFixed(2) >= (threshold-5)){
+                    warnear(soundClass);
                 } else {
                     if (silenceThresholdCount == silenceThreshold) {
                         silenceThresholdCount = 0;
@@ -690,6 +821,7 @@
         }
     
         function toggleManualRing() {
+            manualRing(soundClass);
             fetch('/ring', {
                 method: 'POST'
             })
@@ -701,6 +833,53 @@
             .catch(error => {
                 console.error('Error calling ring endpoint:', error);
             });
+        }
+        //notifications
+        let notifications = document.querySelector('.notifications');
+        
+        function createToast(type, icon, title, text){
+            let newToast = document.createElement('div');
+            newToast.innerHTML = `
+                <div class="toast ${type}">
+                    <i class="${icon}"></i>
+                    <div class="content">
+                        <div class="title">${title}</div>
+                        <span>${text}</span>
+                    </div>
+                    <i class="fa-solid fa-xmark" onclick="(this.parentElement).remove()"></i>
+                </div>`;
+            notifications.appendChild(newToast);
+            newToast.timeOut = setTimeout(
+                ()=>newToast.remove(), 5000
+            )
+        }
+        function manualRing(soundClass){
+            let type = 'manualRing';
+            let icon = 'fa-solid fa-circle-check';
+            let title = 'Ring - "' + soundClass + '"';
+            let text = 'Manual ring activated.';
+            createToast(type, icon, title, text);
+        }
+        function warning(soundClass){
+            let type = 'warning';
+            let icon = 'fa-solid fa-triangle-exclamation';
+            let title = 'Warning - "' + soundClass + '"';
+            let text = 'Noise threshold exceeded.';
+            createToast(type, icon, title, text);
+        }
+        function ring(soundClass){
+            let type = 'ring';
+            let icon = 'fa-solid fa-circle-exclamation';
+            let title = 'Ring - "' + soundClass + '"';
+            let text = 'Noise detected.';
+            createToast(type, icon, title, text);
+        }
+        function warnear(soundClass){
+            let type = 'warnear';
+            let icon = 'fa-solid fa-circle-info';
+            let title = 'Warning - "' + soundClass + '"';
+            let text = 'Approaching noise threshold.';
+            createToast(type, icon, title, text);
         }
     </script>
 </body>

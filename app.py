@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, redirect, url_for
 import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
@@ -7,10 +7,21 @@ import requests
 import math
 
 app = Flask(__name__)
-esp32Address = "10.15.25.91"
+# esp32Address = "10.15.25.91"
+esp32Address = "192.168.1.5"
 # Load the YAMNet model for general sound classification
 yamnet_model = hub.load('https://tfhub.dev/google/yamnet/1')
 
+#admin password
+admin_user = {
+    'name': 'admin',
+    'password': '123'
+}
+#staff password
+staff_user = {
+    'name': 'staff',
+    'password': '123'
+}
 # Find the name of the class with the top score when mean-aggregated across frames.
 def class_names_from_csv(class_map_csv_text):
     """Returns list of class names corresponding to score vector."""
@@ -24,20 +35,42 @@ def class_names_from_csv(class_map_csv_text):
 class_map_path = yamnet_model.class_map_path().numpy()
 class_names = class_names_from_csv(class_map_path)
 
-# Function to calculate RMS amplitude
-def calculate_rms(audio_data):
-    rms = np.sqrt(np.mean(np.square(audio_data)))
-    return rms
+def calculate_rms(waveform):
+    return np.sqrt(np.mean(np.square(waveform)))
 
-# Function to calculate Decibell
-def calculate_db(rms_amplitude, ref=0.00002):
-    db = 20 * math.log10(rms_amplitude / ref)
-    return db
-
+def calculate_db(rms_amplitude):
+    return 20 * np.log10(rms_amplitude/0.00002)
+    
 @app.route('/')
-def index():
-    return render_template('index.html')
+def loginPage():
+    return render_template('login.html')
 
+@app.route('/admin')
+def admin():
+    return render_template('admin.html')
+
+@app.route('/staff')
+def staff():
+    return render_template('staff.html')
+
+@app.route('/login', methods=['POST'])
+def login():
+    name = request.form['name']
+    password = request.form['password']
+
+    if name == admin_user['name'] and password == admin_user['password']:
+        # Successful login, redirect to admin page
+        return redirect(url_for('admin'))
+    elif name == staff_user['name'] and password == staff_user['password']:
+        # Successful login, redirect to staff page
+        return redirect(url_for('staff'))
+    else:
+        # Invalid credentials, redirect back to login page
+        return redirect(url_for('loginPage'))
+
+@app.route('/logout')
+def logout():
+    return redirect(url_for('loginPage'))
 
 @app.route('/ring', methods=['POST'])
 def ring():
@@ -54,9 +87,6 @@ def ring():
 @app.route('/classify_audio')
 def classify_audio():
     try:
-        sample_rate = 16000
-        record_duration = 1
-
         sensitivity = float(request.args.get('sensitivity', 1.0))
 
         # Fetch audio data from ESP32
